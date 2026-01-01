@@ -48,9 +48,9 @@ The CNN model consists of:
 
 ## 📊 Dataset
 
-- **Total Images**: 81 (after augmentation)
-- **Training Set**: 64 images (80%)
-- **Test Set**: 17 images (20%)
+- **Total Images**: 810 (after augmentation)
+- **Training Set**: 640 images (80%)
+- **Test Set**: 170 images (20%)
 - **Image Size**: 28x28 pixels (grayscale)
 - **Classes**: 9 (digits 1-9)
 
