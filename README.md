@@ -1,8 +1,8 @@
-# Handwritten Digit Recognition using CNN
+# Real-World Digit Recognition using CNN
 
 ## 📋 Project Overview
 
-This project implements a **Convolutional Neural Network (CNN)** for recognizing handwritten digits (1-9). The model is trained on custom dataset images and can predict digits from real-world images with high accuracy.
+This project implements a **Convolutional Neural Network (CNN)** for recognizing digits (1-9) from **real-world images**. The model is trained on custom dataset images and can accurately predict digits from photographs, screenshots, and other real-world sources after preprocessing them to MNIST-like format.
 
 ## 🎯 Key Features
 
@@ -54,6 +54,34 @@ The CNN model consists of:
 - **Image Size**: 28x28 pixels (grayscale)
 - **Classes**: 9 (digits 1-9)
 
+### Sample Images from Dataset
+
+Here are examples of the real-world digit images used for training:
+
+<div align="center">
+  <img src="dataset/1.png" width="150" alt="Digit 1"/>
+  <img src="dataset/2.jpg" width="150" alt="Digit 2"/>
+  <img src="dataset/3.png" width="150" alt="Digit 3"/>
+  <img src="dataset/4.png" width="150" alt="Digit 4"/>
+  <img src="dataset/5.png" width="150" alt="Digit 5"/>
+</div>
+
+<div align="center">
+  <img src="dataset/6.png" width="150" alt="Digit 6"/>
+  <img src="dataset/7.png" width="150" alt="Digit 7"/>
+  <img src="dataset/8.png" width="150" alt="Digit 8"/>
+  <img src="dataset/9.png" width="150" alt="Digit 9"/>
+</div>
+
+### Test Images
+
+<div align="center">
+  <img src="dataset/test.png" width="150" alt="Test Image 1"/>
+  <img src="dataset/test2.png" width="150" alt="Test Image 2"/>
+  <img src="dataset/test3.png" width="150" alt="Test Image 3"/>
+  <img src="dataset/test4.png" width="150" alt="Test Image 4"/>
+</div>
+
 ### Data Augmentation
 Images are augmented using rotation at multiple angles: -20°, -15°, -10°, -5°, 5°, 10°, 15°, 20°
 
@@ -98,7 +126,7 @@ Launch the Tkinter GUI to:
 - **Batch Size**: 4
 - **Final Validation Accuracy**: 100%
 
-The model achieves high accuracy on the test set and can recognize handwritten digits from real-world images after preprocessing.
+The model achieves high accuracy on the test set and can recognize digits from real-world images (photographs, screenshots, etc.) after preprocessing.
 
 ## 🖼️ Image Processing Pipeline
 
