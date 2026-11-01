@@ -24,19 +24,32 @@ node node/engine.mjs --approved-by Trainer      # duplicates skipped
 cd node && node --test
 ```
 
+**Invalid-input experiment** (empty title + CEFR `A9`, both rejected; the valid lesson is previewed):
+```bash
+python python/engine.py --input shared/lessons_invalid.json --dry-run --approved-by Trainer
+node node/engine.mjs --input shared/lessons_invalid.json --dry-run --approved-by Trainer
+```
+
 ## Files
 - `shared/workflow.json`: a declarative **linear** nodes + edges model (not a full DAG engine)
 - `shared/lessons.json`: synthetic Dorosak-like sample only
+- `shared/lessons_invalid.json`: synthetic fault-injection sample (empty title, level `A9`, one valid lesson)
 - `python/engine.py` and `node/engine.mjs`: comparable lightweight engines
-- `python/test_engine.py`, `node/engine.test.mjs`: four baseline tests per implementation
-- `output/*_drafts.json`: created locally when approved; contains `status: draft`
+- `python/test_engine.py`, `node/engine.test.mjs`: ten matching tests per implementation (approval gate, blank reviewer, duplicates, empty title, invalid CEFR, mixed batch, dry-run, `word_count`)
+- `output/*_drafts.json`: created locally when approved; contains `status: draft` (git-ignored)
+- `REPORT.md`: workshop delivery report (Arabic): run results, AI usage, extra workflow design, self-assessment
+
+## Workflow nodes
+`validate_lesson` → `normalize_lesson` → `word_count` → `check_duplicate` → `manual_approval` → `save_draft` → `log_result`
+
+`word_count` counts whitespace-separated words in the normalized `body` and stores it as `word_count` on the lesson; it appears in each report item and in the saved draft. It runs before the review gate so reviewers and dry-run previews see it.
 
 ## Suggested lab experiments
 1. Remove a title or use CEFR `A9`: verify `failed_validation` and no invalid content saved.
 2. Run without `--approved-by`: verify `review_pending`, no write.
 3. Run twice with `--approved-by Trainer`: verify duplicates skipped on second run.
 4. Run `--dry-run --approved-by Trainer`: verify preview and no saved changes.
-5. Add a new **approved** node type `word_count` in both registries and workflow before `save_draft`; extend tests.
+5. Add a new **approved** node type `word_count` in both registries and workflow before `save_draft`; extend tests. *(Done: see "Workflow nodes" above.)*
 
 ## Real-world safeguards (not present in this PoC)
 Authenticated role-based human approval, API authorization, webhook signature verification, encrypted secret storage, real transactions/concurrency locks, distributed job queues, retries/backoff with idempotency keys, audit database, rate limits, data retention controls, and production monitoring. Do not expose this demo to public networks or production systems.

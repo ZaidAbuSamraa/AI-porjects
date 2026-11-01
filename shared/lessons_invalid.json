@@ -1,0 +1,5 @@
+[
+  {"source_id":"BAD-001", "title":"", "category":"75 Daily Conversations", "level":"A1", "language":"en", "body":"Fault injection: empty title."},
+  {"source_id":"BAD-002", "title":"Unknown Level", "category":"50 Common Verbs", "level":"A9", "language":"en", "body":"Fault injection: CEFR level A9 does not exist."},
+  {"source_id":"OK-001", "title":"Ordering Coffee", "category":"75 Daily Conversations", "level":"A2", "language":"en", "body":"Can I have a small coffee, please?"}
+]

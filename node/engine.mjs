@@ -10,7 +10,7 @@ const WORKFLOW = path.join(ROOT, 'shared', 'workflow.json');
 const INPUT = path.join(ROOT, 'shared', 'lessons.json');
 const LEVELS = new Set(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']);
 const REQUIRED = ['source_id', 'title', 'category', 'level', 'language', 'body'];
-const SUPPORTED = new Set(['validate_lesson', 'normalize_lesson', 'check_duplicate',
+const SUPPORTED = new Set(['validate_lesson', 'normalize_lesson', 'word_count', 'check_duplicate',
   'manual_approval', 'save_draft', 'log_result']);
 const slugify = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
@@ -59,6 +59,9 @@ export async function runWorkflow(lessons, { approvedBy = '', dryRun = false, st
             ctx.data = d;
             break;
           }
+          case 'word_count':
+            d.word_count = d.body.split(/\s+/).filter(Boolean).length;
+            break;
           case 'check_duplicate':
             if (known.has(d.source_id)) ctx.status = 'skipped_duplicate';
             break;
@@ -84,13 +87,14 @@ export async function runWorkflow(lessons, { approvedBy = '', dryRun = false, st
       ctx.error = ex.message;
     }
     outcomes.push({ source_id: raw?.source_id ?? 'UNKNOWN', status: ctx.status,
-      steps: ctx.steps, ...(ctx.error ? { error: ctx.error } : {}) });
+      steps: ctx.steps, ...('word_count' in ctx.data ? { word_count: ctx.data.word_count } : {}),
+      ...(ctx.error ? { error: ctx.error } : {}) });
   }
   // Single-process educational demo; no concurrent writer protection.
   if (!dryRun && approvedBy.trim()) await atomicJsonWrite(store, saved);
   return { run_id: randomUUID(), workflow_id: wf.id,
     generated_at: new Date().toISOString(),
-    mode: dryRun ? 'dry-run' : approvedBy ? 'approved' : 'review',
+    mode: dryRun ? 'dry-run' : approvedBy.trim() ? 'approved' : 'review',
     summary: Object.fromEntries([...new Set(outcomes.map(x => x.status))].sort()
       .map(s => [s, outcomes.filter(x => x.status === s).length])), items: outcomes };
 }

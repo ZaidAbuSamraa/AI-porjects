@@ -12,6 +12,9 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_PATH = ROOT / "shared" / "workflow.json"
 DATA_PATH = ROOT / "shared" / "lessons.json"
 ALLOWED_LEVELS = {"A1", "A2", "B1", "B2", "C1", "C2"}
+REQUIRED_FIELDS = ("source_id", "title", "category", "level", "language", "body")
+SUPPORTED_NODES = {"validate_lesson", "normalize_lesson", "word_count", "check_duplicate",
+                   "manual_approval", "save_draft", "log_result"}
 
 
 def slugify(value: str) -> str:
@@ -36,9 +39,7 @@ def run_workflow(lessons: list[dict], *, approved_by: str = "", dry_run: bool = 
     expected_edges = [[ids[i], ids[i + 1]] for i in range(len(ids) - 1)]
     if wf["edges"] != expected_edges:
         raise ValueError("PoC only accepts a sequential chain; arbitrary DAGs are not supported")
-    supported = {"validate_lesson", "normalize_lesson", "check_duplicate",
-                 "manual_approval", "save_draft", "log_result"}
-    if any(node["type"] not in supported for node in nodes):
+    if any(node["type"] not in SUPPORTED_NODES for node in nodes):
         raise ValueError("Workflow contains an unknown node type")
     if store.exists():
         saved = json.loads(store.read_text(encoding="utf-8"))
@@ -56,16 +57,16 @@ def run_workflow(lessons: list[dict], *, approved_by: str = "", dry_run: bool = 
                 ctx["steps"].append(node["id"])
                 d = ctx["data"]
                 if action == "validate_lesson":
-                    required = ("source_id", "title", "category", "level", "language", "body")
-                    if any(not isinstance(d.get(k), str) or not d[k].strip() for k in required):
-                        raise ValueError("Missing/empty field: " + ", ".join(
-                            k for k in required if not isinstance(d.get(k), str) or not d[k].strip()))
+                    missing = [k for k in REQUIRED_FIELDS
+                               if not isinstance(d.get(k), str) or not d[k].strip()]
+                    if missing:
+                        raise ValueError("Missing/empty field: " + ", ".join(missing))
                     if d["level"].strip().upper() not in ALLOWED_LEVELS:
                         raise ValueError("Invalid CEFR level")
                     if d["language"].strip().lower() != "en":
                         raise ValueError("Demo only accepts English lessons")
                 elif action == "normalize_lesson":
-                    d = {k: d[k].strip() for k in required}
+                    d = {k: d[k].strip() for k in REQUIRED_FIELDS}
                     d["level"] = d["level"].upper()
                     d["language"] = d["language"].lower()
                     d["slug"] = slugify(d["title"])
@@ -73,6 +74,8 @@ def run_workflow(lessons: list[dict], *, approved_by: str = "", dry_run: bool = 
                     if not d["slug"]:
                         raise ValueError("Cannot generate slug")
                     ctx["data"] = d
+                elif action == "word_count":
+                    d["word_count"] = len(d["body"].split())
                 elif action == "check_duplicate":
                     if d["source_id"] in known:
                         ctx["status"] = "skipped_duplicate"
@@ -98,13 +101,14 @@ def run_workflow(lessons: list[dict], *, approved_by: str = "", dry_run: bool = 
             ctx["error"] = str(ex)
         outcomes.append({"source_id": raw.get("source_id", "UNKNOWN") if isinstance(raw, dict) else "UNKNOWN",
                          "status": ctx["status"], "steps": ctx["steps"],
+                         **({"word_count": ctx["data"]["word_count"]} if "word_count" in ctx["data"] else {}),
                          **({"error": ctx["error"]} if "error" in ctx else {})})
     # Educational single-process demo only: no lock or concurrent writers.
     if not dry_run and approved_by.strip():
         atomic_json_write(store, saved)
     return {"run_id": str(uuid.uuid4()), "workflow_id": wf["id"],
             "generated_at": datetime.now(timezone.utc).isoformat(),
-            "mode": "dry-run" if dry_run else ("approved" if approved_by else "review"),
+            "mode": "dry-run" if dry_run else ("approved" if approved_by.strip() else "review"),
             "summary": {s: sum(o["status"] == s for o in outcomes) for s in sorted(set(o["status"] for o in outcomes))},
             "items": outcomes}
 
