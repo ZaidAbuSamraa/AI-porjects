@@ -4,7 +4,7 @@
 
 ## Quick start (choose one)
 
-From the `starter/` directory:
+From the repository root:
 
 **Python 3.11+** (no pip packages):
 ```bash
